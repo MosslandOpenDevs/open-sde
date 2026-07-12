@@ -4,21 +4,21 @@
 [English](README.md) · 🌐 한국어
 
 Open-SDE는 **Mossland Lab**(lab@moss.land)이 시작한 오픈 리서치 이니셔티브이며,
-하나의 질문에 대한 **범용·범도메인 참조 모델(reference model)**입니다.
+하나의 질문에 대한 **범용·범도메인 참조 모델**(reference model)입니다.
 
 > 소프트웨어 에이전트가 실물 경제에서 행동할 때, **누가 그 권한을 부여하고, 그 권한을
 > 어떻게 제한·철회하며, 확률적 AI 판단을 결정론적 인가·실행·정산·책임과 어떻게 분리할
 > 것인가?**
 
-핵심 개념은 **보증된 제한적 자율성(assured bounded autonomy)**입니다. 즉 소프트웨어는
+핵심 개념은 **보증된 제한적 자율성**(assured bounded autonomy)입니다. 즉 소프트웨어는
 **기계가 강제할 수 있는 정책(machine-enforceable policy)** 아래에서 **제한된 결정**을
 실행하며, 그 경계는 인간이 설정합니다. 이 저장소는 **작업 정의(working definition), 참조
 아키텍처, 적합성 프레임**이며, 실제 구동 시스템이나 또 하나의 에이전트·결제 구현체가
 **아닙니다.**
 
 > *최종 업데이트: 2026년 7월.* 분야의 현재 상태는
-> **[docs/landscape-2026.md](docs/landscape-2026.md)**에 날짜·출처와 함께 정리되어 있으며,
-> 저장소의 모든 사실 주장은 **[docs/references.md](docs/references.md)**의 1차 출처에
+> [docs/landscape-2026.md](docs/landscape-2026.md)에 날짜·출처와 함께 정리되어 있으며,
+> 저장소의 모든 사실 주장은 [docs/references.md](docs/references.md)의 1차 출처에
 > 연결됩니다.
 
 ---
@@ -45,8 +45,8 @@ Open-SDE는 **Mossland Lab**(lab@moss.land)이 시작한 오픈 리서치 이니
 1. **확률적인 것과 결정론적인 것을 분리한다.** 추론·의도 형성·오케스트레이션은 확률적일 수
    있으나, **인가·통제·정산·책임은 결정론적이고 감사 가능해야 한다.** 이는 IMF의 2026년 4월
    노트 *How Agentic AI Will Reshape Payments*의 핵심 논지입니다.
-2. **거버넌스 게이트를 결정자와 집행자로 분리한다** — **정책 결정점(PDP)**과 **정책 집행점
-   (PEP)**으로, 2026년 1월 OpenID **AuthZEN Authorization API 1.0**으로 표준화되었습니다 —
+2. **거버넌스 게이트를 결정자와 집행자로 분리한다** — **정책 결정점**(PDP)과 **정책 집행점**
+   (PEP)으로, 2026년 1월 OpenID **AuthZEN Authorization API 1.0**으로 표준화되었습니다 —
    그리고 신뢰할 수 없는 복잡한 에이전트를 **검증된 런타임 보증(runtime assurance)** 모니터로
    제한하여 안전 모드로 되돌립니다(Simplex 아키텍처, ASTM F3269-21로 확립된 안전공학 패턴).
 
@@ -71,9 +71,9 @@ flowchart TD
 
 *에이전트 계획*과 *PDP* 사이의 점선이 확률적/결정론적 경계입니다. 신원·위임·출처·예산·감사·복구는
 모든 단계를 관통합니다. 이 루프는 실제 사례와 각 노드를 2026년 실제 기술에 매핑하여
-**[docs/reference-architecture.md](docs/reference-architecture.md)**에서 확장됩니다.
+[docs/reference-architecture.md](docs/reference-architecture.md)에서 확장됩니다.
 
-기존 스케치 대비 용어 변화에 유의하세요. 일반형은 **권위 상태 모델(Authoritative State Model)**
+기존 스케치 대비 용어 변화에 유의하세요. 일반형은 **권위 상태 모델**(Authoritative State Model)
 이며 *디지털 트윈*은 그 물리 도메인 특수형입니다. 에이전트는 "1급 경제 주체"가 아니라 **위임된
 권한 아래 동작하는 소프트웨어 에이전트**입니다. 인간의 역할은 사라지지 않고 개별 승인에서
 **권한·예산 설정, 모니터링, 철회, 예외 처리**로 이동합니다. *AI는 추천하고, 경계는 인간이
@@ -90,7 +90,7 @@ flowchart TD
 | 작업 정의, 참조 아키텍처, **SDE-0** 적합성 프레임 | 표준·인증 체계·운영 준비 완료 시스템 |
 | 날짜·출처가 달린 1차 자료에 근거, 미검증 주장 제외 | 새로운 미인용 통계의 출처 |
 
-Mossland 자체 시스템은 **사례 연구(case study)**로만 다루며, 루프 및 SDE-0에 매핑됩니다:
+Mossland 자체 시스템은 **사례 연구**(case study)로만 다루며, 루프 및 SDE-0에 매핑됩니다:
 [docs/case-studies/mossland-crosswalk.md](docs/case-studies/mossland-crosswalk.md).
 
 ---
