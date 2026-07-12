@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MosslandOpenDevs/open-sde/main/schemas/action-mandate.schema.json",
+  "title": "Action Mandate (delegated authority)",
+  "description": "The instrument by which a principal grants a software agent bounded, revocable authority to act. A mandate answers the questions at the center of Open-SDE's assured-bounded-autonomy frame: who granted the authority, what it permits, how it is bounded and budgeted, when it expires, and how it is revoked. It implements SDE-0 conformance requirement 2 (a mandate stating scope, budget, duration, target, and revocation conditions) and names the identifiable principal/owner/agent of requirement 1. A mandate is evaluated, never self-executed: a PDP that is independent of the AI decides whether a specific requested action falls within it (schemas/policy-decision.schema.json). Non-claim: authenticating an agent's identity is NOT the same as authorizing a specific action, and holding a token is NOT legal ownership or execution authority. Human involvement is re-scoped, not removed: it moves from per-action approval to setting authority, budgets, monitoring, and revocation, with per-action escalation reserved for the exceptions named in humanInLoopTriggers.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable, globally unique identifier for this mandate. Referenced by policy-decision.mandateRef and execution-receipt.mandateRef."
+    },
+    "principal": {
+      "type": "string",
+      "description": "The party on whose behalf and under whose ultimate legal responsibility the agent acts (the grantor of authority)."
+    },
+    "ownerOperator": {
+      "type": "string",
+      "description": "The party that operates and is accountable for the agent day-to-day. May differ from the principal (for example a managed-service operator acting for a principal customer)."
+    },
+    "agentId": {
+      "type": "string",
+      "description": "Identifier of the specific software agent this mandate authorizes. This binds authority to one agent identity; identity alone does not confer authorization."
+    },
+    "scope": {
+      "type": "object",
+      "description": "The bounded set of actions and resources the agent may touch under this mandate.",
+      "properties": {
+        "allowedActions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Enumerated action types permitted (for example 'purchase', 'adjust-setpoint', 'rebalance'). Anything not listed is denied by default."
+        },
+        "allowedResources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Enumerated resources or targets the actions may be applied to (for example account IDs, device IDs, or resource URNs)."
+        }
+      },
+      "required": ["allowedActions", "allowedResources"]
+    },
+    "budget": {
+      "type": "object",
+      "description": "The economic ceiling on the mandate. Enforced deterministically at execution time.",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 code or token/unit symbol the cap and spend are denominated in (for example 'USD')."
+        },
+        "cap": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum cumulative amount the agent may commit under this mandate."
+        },
+        "spent": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cumulative amount already committed. Enforcement MUST deny actions that would push spent above cap."
+        }
+      },
+      "required": ["currency", "cap", "spent"]
+    },
+    "validity": {
+      "type": "object",
+      "description": "The time window during which the mandate is active (duration bound).",
+      "properties": {
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 instant before which the mandate is not yet effective."
+        },
+        "notAfter": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 instant after which the mandate has expired and must be treated as revoked."
+        }
+      },
+      "required": ["notBefore", "notAfter"]
+    },
+    "conditions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional preconditions that must hold for the mandate to apply (for example 'twin-state.confidence >= 0.7' or 'market-open'). Evaluated by the PDP."
+    },
+    "obligations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Duties the agent or enforcement point must fulfil when acting under this mandate (for example 'log-to-audit', 'notify-owner-on-commit'). Mirrors AuthZEN-style obligations returned with a decision."
+    },
+    "humanInLoopTriggers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Conditions that require escalation to a human before or during action (for example 'amount > 1000', 'irreversible', 'low-confidence-state'). Implements the shift from out-of-the-loop autonomy to human oversight of exceptions."
+    },
+    "revocation": {
+      "type": "object",
+      "description": "Revocation state and policy for the mandate. Revocability is a first-class property of delegated authority.",
+      "properties": {
+        "revocable": {
+          "type": "boolean",
+          "description": "Whether the mandate can be revoked before natural expiry. Should be true for any real delegated authority."
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 instant the mandate was revoked, if applicable. Once set, enforcement MUST deny all further actions under this mandate."
+        }
+      },
+      "required": ["revocable"]
+    }
+  },
+  "required": ["id", "principal", "ownerOperator", "agentId", "scope", "budget", "validity", "revocation"],
+  "examples": [
+    {
+      "id": "mandate:energy-optimizer:2026-Q3:building-7",
+      "principal": "org:acme-realty",
+      "ownerOperator": "svc:mossland-facilities-ops",
+      "agentId": "agent:energy-optimizer-v4",
+      "scope": {
+        "allowedActions": ["adjust-setpoint", "purchase-grid-energy"],
+        "allowedResources": ["device:building-7/hvac/*", "market:grid-day-ahead"]
+      },
+      "budget": {
+        "currency": "USD",
+        "cap": 5000,
+        "spent": 1180.42
+      },
+      "validity": {
+        "notBefore": "2026-07-01T00:00:00Z",
+        "notAfter": "2026-10-01T00:00:00Z"
+      },
+      "conditions": ["twin-state.confidence >= 0.7", "outsideDemandResponseEvent"],
+      "obligations": ["log-to-audit", "notify-owner-on-commit"],
+      "humanInLoopTriggers": ["singleCommitUsd > 500", "irreversibleGridPurchase"],
+      "revocation": {
+        "revocable": true
+      }
+    }
+  ]
+}

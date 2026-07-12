@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MosslandOpenDevs/open-sde/main/schemas/twin-state.schema.json",
+  "title": "Twin State (Authoritative State Model snapshot)",
+  "description": "A point-in-time snapshot of the Authoritative State Model an agent reasons over. 'Authoritative State Model' is the general term for the state an agent treats as its working picture of the world; a Digital Twin is its physical-domain specialization, flagged by isPhysicalTwin. A snapshot is reconciled from one or more Reality Signals (schemas/reality-signal.schema.json) and always carries confidence and explicit coverage/limits. Non-claim: a Digital Twin is NOT ground truth, and a state that validates in simulation is NOT a real-world safety certification. Reconciliation of modelled state against observed outcome is required at execution time (see schemas/execution-receipt.schema.json). Grounding for embodied/world-model state: the ITU-T Focus Group on Embodied AI for Multimedia Technologies (FG-EAI), established by ITU-T Study Group 21 on 2026-02-19, names world-model training and closed-loop control as foundational, https://www.itu.int/en/ITU-T/focusgroups/eai/Pages/default.aspx.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable, globally unique identifier for this snapshot instance."
+    },
+    "subject": {
+      "type": "string",
+      "description": "Identifier of the real-world or logical entity this snapshot models (for example a building, a market, an account, a fleet vehicle, or an API-addressable resource)."
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp the snapshot claims to represent. Fields reflect the subject's estimated state as of this instant, not necessarily the moment of computation."
+    },
+    "model": {
+      "type": "object",
+      "description": "Identity and version of the model that produced this snapshot, so a decision can be traced to the exact model revision that informed it.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable model or twin identifier (for example 'building-energy-twin' or 'orderbook-state-model')."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the model, ideally semantic (for example '3.2.0'), used for reproducibility and auditing."
+        }
+      },
+      "required": ["name", "version"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Overall confidence in the snapshot's accuracy, from 0 (no confidence) to 1 (full confidence). This is a probabilistic estimate and must not be treated as a deterministic guarantee."
+    },
+    "coverage": {
+      "type": "object",
+      "description": "What the model does and does not represent. Making scope explicit prevents an agent from over-trusting the twin.",
+      "properties": {
+        "included": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Aspects or subsystems the model claims to represent."
+        },
+        "limits": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Known blind spots, unmodelled dynamics, or stale regions. Documents where the twin is NOT authoritative."
+        }
+      },
+      "required": ["limits"]
+    },
+    "fields": {
+      "type": "object",
+      "description": "The modelled state itself, as a domain-specific set of named values. Semantics are owned by the model named above, not by this schema."
+    },
+    "isPhysicalTwin": {
+      "type": "boolean",
+      "description": "True when this Authoritative State Model is a physical-domain Digital Twin (mirrors a physical asset or environment); false for purely digital/commerce/API state. Do not force 'Digital Twin' framing onto non-physical domains."
+    }
+  },
+  "required": ["id", "subject", "asOf", "model", "confidence", "coverage", "fields", "isPhysicalTwin"],
+  "examples": [
+    {
+      "id": "ts:building-7:2026-07-12T14:03:30Z",
+      "subject": "asset:building-7",
+      "asOf": "2026-07-12T14:03:30Z",
+      "model": {
+        "name": "building-energy-twin",
+        "version": "3.2.0"
+      },
+      "confidence": 0.86,
+      "coverage": {
+        "included": ["hvac", "occupancy-estimate", "grid-tariff"],
+        "limits": ["does not model tenant plug-load", "zone-4 sensor offline since 13:40Z"]
+      },
+      "fields": {
+        "meanIndoorTempC": 22.7,
+        "occupancyEstimate": 0.34,
+        "currentTariffUsdPerKwh": 0.19,
+        "sourceSignals": ["rs:2026-07-12:hvac-zone-3:temp:0f1c"]
+      },
+      "isPhysicalTwin": true
+    }
+  ]
+}

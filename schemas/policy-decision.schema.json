@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MosslandOpenDevs/open-sde/main/schemas/policy-decision.schema.json",
+  "title": "Policy Decision (PDP verdict, AuthZEN-aligned)",
+  "description": "A verdict issued by a Policy Decision Point (PDP) in response to a subject/resource/action/context request, to be enforced by a Policy Enforcement Point (PEP). Splitting the governance gate into a PDP (which decides) and a PEP (which enforces) is SDE-0 conformance requirement 4: the decision and its enforcement live outside the AI model. The request/decision/obligations shape follows the OpenID AuthZEN Authorization API 1.0, an OpenID Final Specification dated 2026-01-11 and approved by the OpenID Foundation membership on 2026-01-12, https://openid.net/specs/authorization-api-1_0.html. The PDP/PEP split itself originates in the ABAC/XACML tradition; AuthZEN standardizes the API between them. A decision authorizes one action against one resource; it does not certify real-world outcome, which is reconciled later (schemas/execution-receipt.schema.json). Grounding for keeping this authorization layer deterministic: IMF Note 2026/004 'How Agentic AI Will Reshape Payments' (2026-04-22) places authorization/control in a strictly deterministic layer separate from probabilistic intent/orchestration, https://www.imf.org/en/publications/imf-notes/issues/2026/04/22/how-agentic-ai-will-reshape-payments-575560.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable, globally unique identifier for this decision. Referenced by execution-receipt.decisionRef."
+    },
+    "request": {
+      "type": "object",
+      "description": "The access-evaluation request the PDP ruled on, in AuthZEN's subject/resource/action/context tuple form.",
+      "properties": {
+        "subject": {
+          "type": "string",
+          "description": "The requesting entity, typically the agent identity from action-mandate.agentId."
+        },
+        "resource": {
+          "type": "string",
+          "description": "The resource or target the action would be applied to."
+        },
+        "action": {
+          "type": "string",
+          "description": "The action type requested (must match a mandate allowedAction to be permitted)."
+        },
+        "context": {
+          "type": "object",
+          "description": "Additional attributes the PDP considered (for example current budget spend, twin-state confidence, time of day, freshness of inputs)."
+        }
+      },
+      "required": ["subject", "resource", "action"]
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["permit", "deny"],
+      "description": "The PDP verdict. 'permit' authorizes the single requested action subject to any obligations; 'deny' forbids it. Anything other than an explicit permit MUST be enforced as a deny."
+    },
+    "obligations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Actions the PEP MUST perform as a condition of enforcing a permit (for example 'log-to-audit', 'require-human-approval', 'attach-receipt'). AuthZEN-style obligations."
+    },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human-readable justifications for the verdict, especially for a deny (for example 'budget cap exceeded', 'action not in mandate scope', 'mandate revoked')."
+    },
+    "policyRefs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Identifiers of the policies or rules applied, supporting policy-to-code traceability (code complements, does not replace, organizational responsibility)."
+    },
+    "mandateRef": {
+      "type": "string",
+      "description": "Identifier of the action-mandate (action-mandate.id) this decision was evaluated against."
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 instant the decision was rendered."
+    }
+  },
+  "required": ["id", "request", "decision", "mandateRef", "decidedAt"],
+  "examples": [
+    {
+      "id": "pd:2026-07-12T14:04:02Z:9ab3",
+      "request": {
+        "subject": "agent:energy-optimizer-v4",
+        "resource": "market:grid-day-ahead",
+        "action": "purchase-grid-energy",
+        "context": {
+          "amountUsd": 320,
+          "twinConfidence": 0.86,
+          "budgetRemainingUsd": 3819.58
+        }
+      },
+      "decision": "permit",
+      "obligations": ["log-to-audit", "attach-receipt"],
+      "reasons": ["action within mandate scope", "under single-commit human-in-loop threshold"],
+      "policyRefs": ["policy:energy-budget", "policy:grid-purchase-hours"],
+      "mandateRef": "mandate:energy-optimizer:2026-Q3:building-7",
+      "decidedAt": "2026-07-12T14:04:02Z"
+    }
+  ]
+}

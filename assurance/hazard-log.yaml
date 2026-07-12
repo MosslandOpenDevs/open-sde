@@ -1,0 +1,216 @@
+# Open-SDE starter hazard log
+#
+# Maturity: Draft. This is an illustrative starter log, not a validated safety case.
+# It instantiates the categories in assurance/failure-taxonomy.md as concrete,
+# domain-neutral hazard entries so that a real deployment has a template to extend.
+#
+# Field conventions:
+#   id           - stable hazard identifier (HZ-NN)
+#   title        - short human-readable name
+#   loop_stage   - stage of the SDE reference loop where the hazard originates
+#                  (Reality Signals | Authoritative State Model | Agent Decision |
+#                   Governance Gate | Execution | Settlement | Reconciliation |
+#                   Continuous Monitoring)
+#   taxonomy     - the failure-taxonomy.md category this hazard maps to (F-NN)
+#   description  - what the hazard is, in one or two sentences
+#   likelihood   - qualitative: low | medium | high  (untuned placeholder estimates)
+#   severity     - qualitative: low | medium | high | critical
+#   mitigations  - the SDE-0 conformance requirements that bound this hazard
+#                  (sde0_req_1 .. sde0_req_7; see docs/sde-0-conformance-profile.md)
+#   monitoring   - relevant NIST AI 800-4 post-deployment monitoring categories
+#                  (Functionality | Operational | Human Factors | Security |
+#                   Compliance | Large-Scale Impacts)
+#   status       - open | mitigated | accepted | monitoring
+#
+# Sources: SDE-0 profile (docs/sde-0-conformance-profile.md); NIST AI 800-4 six
+# monitoring categories (https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.800-4.pdf);
+# OWASP Top 10 for Agentic Applications, ASI01/ASI08
+# (https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/).
+
+hazards:
+  - id: HZ-01
+    title: Agent acts on stale market or inventory state
+    loop_stage: Authoritative State Model
+    taxonomy: F-01
+    description: >-
+      A cached price, balance, or inventory figure is past its freshness window,
+      so the agent commits to an action anchored to a world that has already changed.
+    likelihood: high
+    severity: medium
+    mitigations:
+      - sde0_req_3
+      - sde0_req_6
+    monitoring:
+      - Functionality
+      - Operational
+    status: open
+
+  - id: HZ-02
+    title: Forged upstream signal accepted as authoritative
+    loop_stage: Reality Signals
+    taxonomy: F-02
+    description: >-
+      An input arrives claiming trusted provenance (oracle, twin, upstream service)
+      that cannot be cryptographically verified, and is admitted to the state model.
+    likelihood: medium
+    severity: high
+    mitigations:
+      - sde0_req_3
+      - sde0_req_1
+    monitoring:
+      - Security
+      - Functionality
+    status: open
+
+  - id: HZ-03
+    title: Agent goal hijack via injected content (OWASP ASI01)
+    loop_stage: Agent Decision
+    taxonomy: F-03
+    description: >-
+      Adversarial instructions embedded in a document, tool response, or RAG corpus
+      redirect the agent's objective toward attacker-chosen actions.
+    likelihood: high
+    severity: critical
+    mitigations:
+      - sde0_req_4
+      - sde0_req_2
+    monitoring:
+      - Security
+      - Human Factors
+    status: open
+
+  - id: HZ-04
+    title: Effector reached without a valid PDP decision
+    loop_stage: Governance Gate
+    taxonomy: F-04
+    description: >-
+      A code path, misconfigured default-allow rule, or over-scoped token lets an
+      action reach an effector without a current, valid Policy Decision Point verdict.
+    likelihood: medium
+    severity: critical
+    mitigations:
+      - sde0_req_4
+      - sde0_req_1
+    monitoring:
+      - Security
+      - Compliance
+    status: open
+
+  - id: HZ-05
+    title: Cumulative spend exceeds mandate budget
+    loop_stage: Execution
+    taxonomy: F-05
+    description: >-
+      Many individually-permitted actions, or a race between concurrent agents,
+      push total spend or resource consumption past the mandate's stated budget.
+    likelihood: medium
+    severity: high
+    mitigations:
+      - sde0_req_2
+      - sde0_req_5
+    monitoring:
+      - Operational
+      - Compliance
+    status: open
+
+  - id: HZ-06
+    title: Duplicate execution from missing idempotency key
+    loop_stage: Execution
+    taxonomy: F-06
+    description: >-
+      A retried or re-delivered request without an idempotency key causes the same
+      intended action (order, transfer, actuation) to execute more than once.
+    likelihood: medium
+    severity: high
+    mitigations:
+      - sde0_req_5
+      - sde0_req_6
+    monitoring:
+      - Operational
+      - Functionality
+    status: open
+
+  - id: HZ-07
+    title: Multi-step action left partially complete
+    loop_stage: Execution
+    taxonomy: F-07
+    description: >-
+      Payment captures but the order is never placed (or the physical analogue),
+      leaving the world in an inconsistent intermediate state with no compensating action.
+    likelihood: medium
+    severity: high
+    mitigations:
+      - sde0_req_5
+      - sde0_req_6
+    monitoring:
+      - Operational
+      - Functionality
+    status: open
+
+  - id: HZ-08
+    title: Receipt reports success but outcome did not occur
+    loop_stage: Reconciliation
+    taxonomy: F-08
+    description: >-
+      The execution receipt confirms success while the observed real-world outcome
+      differs (cleared payment, undelivered goods), and no reconciliation flags it.
+    likelihood: medium
+    severity: high
+    mitigations:
+      - sde0_req_6
+      - sde0_req_7
+    monitoring:
+      - Functionality
+      - Large-Scale Impacts
+    status: open
+
+  - id: HZ-09
+    title: Policy validated in simulation fails in reality
+    loop_stage: Authoritative State Model
+    taxonomy: F-09
+    description: >-
+      A policy proven against a twin or simulation behaves differently in the real
+      world because a relevant dynamic was omitted; operators overtrust the sim result.
+    likelihood: medium
+    severity: high
+    mitigations:
+      - sde0_req_3
+      - sde0_req_6
+    monitoring:
+      - Functionality
+      - Human Factors
+    status: open
+
+  - id: HZ-10
+    title: Enforcement point degrades and fails open
+    loop_stage: Governance Gate
+    taxonomy: F-10
+    description: >-
+      The PEP or safety monitor crashes, stalls, or is bypassed and permits actions
+      while unhealthy, so the bounding machinery itself becomes the point of failure.
+    likelihood: low
+    severity: critical
+    mitigations:
+      - sde0_req_4
+      - sde0_req_7
+    monitoring:
+      - Operational
+      - Security
+    status: open
+
+  - id: HZ-11
+    title: Kill-switch cascade on emergency halt (OWASP ASI08)
+    loop_stage: Continuous Monitoring
+    taxonomy: F-11
+    description: >-
+      An emergency halt or mass mandate revocation strands in-flight commitments and
+      cascades through dependent agents, causing harm instead of reverting to a safe mode.
+    likelihood: low
+    severity: high
+    mitigations:
+      - sde0_req_7
+      - sde0_req_5
+    monitoring:
+      - Large-Scale Impacts
+      - Operational
+    status: open

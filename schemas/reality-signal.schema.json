@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MosslandOpenDevs/open-sde/main/schemas/reality-signal.schema.json",
+  "title": "Reality Signal",
+  "description": "An observed signal about the world that feeds an Authoritative State Model. A Reality Signal is data, not authority: it never grants an agent the right to act. Each signal MUST carry provenance, an observation timestamp, freshness, and an explicit uncertainty statement so that downstream decision and enforcement components (the PDP/PEP described in schemas/policy-decision.schema.json) can weigh it. The requirement that inputs carry provenance, timestamp, freshness, and uncertainty implements SDE-0 conformance requirement 3. Grounding: NIST AI 800-4 'Challenges to the Monitoring of Deployed AI Systems' (NIST CAISI final report, 2026-03-06) treats operational input monitoring as a distinct post-deployment category, https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.800-4.pdf. Non-claim: a signal (even a cryptographically signed or on-chain one) is an observation, not ground truth about the physical world.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable, globally unique identifier for this signal instance (for example a UUID or URN). Referenced by twin-state fields and execution-receipt.observedOutcome."
+    },
+    "source": {
+      "type": "string",
+      "description": "Identifier of the sensor, oracle, API endpoint, or service that emitted the observation (for example 'oracle:chainlink-eth-usd' or 'sensor:hvac-zone-3-temp')."
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp of when the phenomenon was observed at source, not when it was ingested. Used together with freshnessSeconds to judge staleness."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "How this signal was obtained and under whose authority, so its trustworthiness can be evaluated independently of its payload.",
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "How the observation was produced or acquired, for example 'direct-sensor', 'oracle-attestation', 'api-poll', 'human-report', or 'derived'."
+        },
+        "authority": {
+          "type": "string",
+          "description": "The party or system vouching for the observation (for example the operator of the sensor network or the oracle contract address)."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Optional detached cryptographic signature or attestation over the payload, encoded as base64 or hex. Presence of a signature attests to integrity/origin, NOT to the truth of the observed value."
+        }
+      },
+      "required": ["method", "authority"]
+    },
+    "freshnessSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Maximum age, in seconds, for which this observation should be treated as valid. A consumer MUST treat the signal as stale once (now - observedAt) exceeds this value."
+    },
+    "uncertainty": {
+      "type": "object",
+      "description": "Explicit statement of how uncertain the observed value is. Probabilistic reasoning may consume this; deterministic authorization and settlement must not silently assume certainty.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["stddev", "variance", "confidence-interval", "probability", "categorical", "unknown"],
+          "description": "The kind of uncertainty quantification supplied in 'value'."
+        },
+        "value": {
+          "description": "The uncertainty magnitude, interpreted according to 'type' (for example a numeric standard deviation, a [low, high] interval, or a probability in [0,1])."
+        }
+      },
+      "required": ["type", "value"]
+    },
+    "payload": {
+      "type": "object",
+      "description": "The observed content itself. Free-form and domain-specific (for example a temperature reading, a price quote, an inventory count, or a location). Semantics are defined by the consuming Authoritative State Model, not by this schema."
+    }
+  },
+  "required": ["id", "source", "observedAt", "provenance", "freshnessSeconds", "uncertainty", "payload"],
+  "examples": [
+    {
+      "id": "rs:2026-07-12:hvac-zone-3:temp:0f1c",
+      "source": "sensor:hvac-zone-3-temp",
+      "observedAt": "2026-07-12T14:03:11Z",
+      "provenance": {
+        "method": "direct-sensor",
+        "authority": "facilities.example.com/bms",
+        "signature": "MEUCIQD3k...c2ln"
+      },
+      "freshnessSeconds": 120,
+      "uncertainty": {
+        "type": "stddev",
+        "value": 0.4
+      },
+      "payload": {
+        "metric": "temperature_celsius",
+        "value": 22.7,
+        "unit": "C"
+      }
+    }
+  ]
+}

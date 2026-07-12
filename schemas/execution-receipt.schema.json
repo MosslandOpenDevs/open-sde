@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MosslandOpenDevs/open-sde/main/schemas/execution-receipt.schema.json",
+  "title": "Execution Receipt (execution and reconciliation record)",
+  "description": "The deterministic, auditable record of one attempted action: what was executed under which decision and mandate, how it settled, and — critically — how the execution receipt reconciles against the observed real-world outcome. Its central discipline is SDE-0 conformance requirement 6: transaction/execution success is NOT the same as outcome success, so the receipt always compares the settlement/execution result against an observed outcome and records a reconciliation verdict. It also carries the idempotency key that requirement 5 requires. Grounding for keeping settlement deterministic and distinct from probabilistic reasoning: IMF Note 2026/004 'How Agentic AI Will Reshape Payments' (2026-04-22) treats settlement as a strictly deterministic layer with legal finality, https://www.imf.org/en/publications/imf-notes/issues/2026/04/22/how-agentic-ai-will-reshape-payments-575560. Non-claims recorded here in spirit: a successful transaction is NOT a successful real action, and blockchain immutability attests to a record, NOT to the truth of external inputs or physical outcomes.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable, globally unique identifier for this receipt."
+    },
+    "actionRef": {
+      "type": "string",
+      "description": "Identifier of the concrete action instance that was executed. Ties the receipt back to the request captured in the policy-decision."
+    },
+    "mandateRef": {
+      "type": "string",
+      "description": "Identifier of the action-mandate (action-mandate.id) the action was authorized under."
+    },
+    "decisionRef": {
+      "type": "string",
+      "description": "Identifier of the policy-decision (policy-decision.id) that permitted the action. A receipt SHOULD NOT exist for an action lacking a permit decision."
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "description": "Key ensuring the action executes at most once even under retries. Enforcement MUST treat repeated submissions with the same key as the same action."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["executed", "failed", "rejected", "pending", "rolled-back", "fallback"],
+      "description": "Terminal or interim state of the execution attempt. 'rejected' means the PEP refused before execution; 'fallback' means a verified safe-mode was entered instead (runtime-assurance reversion)."
+    },
+    "settlement": {
+      "type": "object",
+      "description": "Settlement details when the action moved value or committed a transaction. Present for economic actions; may be omitted for purely control actions.",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Settlement reference (for example a payment intent ID, transaction hash, or ledger entry ID)."
+        },
+        "rail": {
+          "type": "string",
+          "description": "The settlement rail used (for example 'card-network', 'stablecoin', 'ach', 'internal-ledger'). Rail-neutral: no rail is privileged by this schema."
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Amount settled."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 code or token/unit symbol the amount is denominated in."
+        }
+      },
+      "required": ["ref", "rail", "amount", "currency"]
+    },
+    "observedOutcome": {
+      "type": "object",
+      "description": "The real-world result actually observed after execution, typically sourced from one or more Reality Signals (schemas/reality-signal.schema.json). This is compared against the execution/settlement result during reconciliation."
+    },
+    "reconciliation": {
+      "type": "object",
+      "description": "The verdict of comparing the execution/settlement record against the observed outcome. The point of the whole receipt.",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["matched", "mismatch", "pending"],
+          "description": "'matched' means execution and observed outcome agree; 'mismatch' means they diverge (execution success without real success, or vice versa) and requires investigation/recovery; 'pending' means the outcome is not yet observable."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Human-readable explanation of the reconciliation result, especially for a mismatch (for example 'charge settled but device did not reach setpoint')."
+        }
+      },
+      "required": ["status"]
+    },
+    "audit": {
+      "type": "object",
+      "description": "Tamper-evidence and provenance for the receipt itself.",
+      "properties": {
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 instant the receipt was recorded."
+        },
+        "signatures": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "One or more cryptographic signatures over the receipt (for example by the executor, the PEP, and/or a settlement authority). Signatures attest to record integrity, not to outcome truth."
+        }
+      },
+      "required": ["recordedAt"]
+    }
+  },
+  "required": ["id", "actionRef", "mandateRef", "decisionRef", "idempotencyKey", "status", "reconciliation", "audit"],
+  "examples": [
+    {
+      "id": "er:2026-07-12T14:04:05Z:7c21",
+      "actionRef": "act:grid-purchase:2026-07-12T14:04:03Z",
+      "mandateRef": "mandate:energy-optimizer:2026-Q3:building-7",
+      "decisionRef": "pd:2026-07-12T14:04:02Z:9ab3",
+      "idempotencyKey": "grid-purchase-building7-2026-07-12T14",
+      "status": "executed",
+      "settlement": {
+        "ref": "txn:ledger:00af92c1",
+        "rail": "internal-ledger",
+        "amount": 320,
+        "currency": "USD"
+      },
+      "observedOutcome": {
+        "signalRefs": ["rs:2026-07-12T14:20Z:building-7:meter"],
+        "deliveredKwh": 1580,
+        "expectedKwh": 1600
+      },
+      "reconciliation": {
+        "status": "mismatch",
+        "notes": "Settlement succeeded for 1600 kWh but metered delivery was 1580 kWh; 20 kWh shortfall flagged for recovery."
+      },
+      "audit": {
+        "recordedAt": "2026-07-12T14:20:11Z",
+        "signatures": ["MEQCIF9k...exec", "MEUCIQC1...pep"]
+      }
+    }
+  ]
+}
