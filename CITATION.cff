@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: "Open-SDE: A Working Reference Model for the Software-Defined Economy"
+message: "If you reference this framework, please cite it as below."
+type: software
+abstract: >-
+  Open-SDE is an open research initiative by Mossland Lab that specifies
+  general-purpose reference architecture, authority and safety models, and a
+  minimum conformance profile (SDE-0) for connecting probabilistic AI-agent
+  decisions to deterministic real-world execution under bounded, revocable,
+  and auditable authority — "assured bounded autonomy."
+authors:
+  - name: "Mossland Lab"
+    email: lab@moss.land
+    website: "https://moss.land"
+repository-code: "https://github.com/MosslandOpenDevs/open-sde"
+url: "https://github.com/MosslandOpenDevs/open-sde"
+license: MIT
+version: "0.2.0-draft"
+date-released: "2026-07-12"
+keywords:
+  - software-defined economy
+  - agentic economy
+  - assured bounded autonomy
+  - delegated authority
+  - policy decision point
+  - policy enforcement point
+  - runtime assurance
+  - governance as code
+  - reference architecture
