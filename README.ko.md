@@ -1,4 +1,9 @@
 # open-sde
+
+<!-- opendevs-badges:start -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-64748b?style=flat)](LICENSE)
+<!-- opendevs-badges:end -->
+
 **소프트웨어 정의 경제(Software-Defined Economy)에 대한 오픈 리서치**
 
 [English](README.md) · 🌐 한국어

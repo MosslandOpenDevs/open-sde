@@ -1,4 +1,9 @@
 # open-sde
+
+<!-- opendevs-badges:start -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-64748b?style=flat)](LICENSE)
+<!-- opendevs-badges:end -->
+
 **Open Research on the Software-Defined Economy**
 
 🌐 English · [한국어](README.ko.md)
